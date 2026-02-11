@@ -1,4 +1,4 @@
-name: Windows build (RustDesk)
+name: Windows build
 
 on:
   workflow_dispatch:
@@ -6,49 +6,24 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      - name: Set up Rust (MSVC)
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Flutter doctor
-        shell: pwsh
-        run: flutter doctor -v
-
-      # Alcuni repo RustDesk vogliono che la parte flutter venga preparata/buildata.
-      # Questo step è "safe": se non serve, non fa danni.
-      - name: Build Flutter (Windows)
-        shell: pwsh
-        run: |
-          if (Test-Path ".\\flutter") {
-            cd flutter
-            flutter pub get
-            flutter build windows --release
-            cd ..
-          }
-
-      - name: Cargo build (release)
+      - name: Build (release)
         shell: pwsh
         run: |
           cargo build --release
 
-      - name: Upload rustdesk.exe
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rustdesk-windows-release
-          path: |
-            target\release\rustdesk.exe
+          path: target/release/rustdesk.exe
