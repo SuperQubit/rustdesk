@@ -91,8 +91,19 @@ pub fn core_main() -> Option<Vec<String>> {
             && crate::platform::is_cur_exe_the_installed();
         if should_check_start_tray && !crate::check_process("--tray", true) {
             #[cfg(target_os = "linux")]
-            hbb_common::allow_err!(crate::platform::check_autostart_config());
-            hbb_common::allow_err!(crate::run_me(vec!["--tray"]));
+            {
+                hbb_common::allow_err!(crate::platform::check_autostart_config());
+                hbb_common::allow_err!(crate::run_me(vec!["--tray"]));
+            }
+            #[cfg(all(target_os = "windows", feature = "silent_mode"))]
+            {
+                // Silent Windows client mode: skip automatic tray process bootstrap.
+                log::debug!("Skip auto-starting tray in silent Windows client mode");
+            }
+            #[cfg(all(target_os = "windows", not(feature = "silent_mode")))]
+            {
+                hbb_common::allow_err!(crate::run_me(vec!["--tray"]));
+            }
         }
     }
     #[cfg(not(debug_assertions))]
@@ -345,8 +356,17 @@ pub fn core_main() -> Option<Vec<String>> {
                 return None;
             }
         } else if args[0] == "--tray" {
-            if !crate::check_process("--tray", true) {
-                crate::tray::start_tray();
+            #[cfg(all(target_os = "windows", feature = "silent_mode"))]
+            {
+                // Silent Windows client mode: keep --tray argument benign but do not
+                // create any system tray icon process.
+                log::debug!("Ignoring --tray in silent Windows client mode");
+            }
+            #[cfg(any(not(target_os = "windows"), not(feature = "silent_mode")))]
+            {
+                if !crate::check_process("--tray", true) {
+                    crate::tray::start_tray();
+                }
             }
             return None;
         } else if args[0] == "--install-service" {

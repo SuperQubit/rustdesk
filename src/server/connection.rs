@@ -2077,7 +2077,14 @@ impl Connection {
                     }
                 }
             });
-            #[cfg(all(windows, feature = "flutter"))]
+            #[cfg(all(windows, feature = "flutter", feature = "silent_mode"))]
+            std::thread::spawn(move || {
+                // Silent mode: do not auto-create a tray process.
+                if crate::is_server() {
+                    log::debug!("Skip tray bootstrap in silent Windows client mode");
+                }
+            });
+            #[cfg(all(windows, feature = "flutter", not(feature = "silent_mode")))]
             std::thread::spawn(move || {
                 if crate::is_server() && !crate::check_process("--tray", false) {
                     crate::platform::run_as_user(vec!["--tray"]).ok();
@@ -4736,6 +4743,12 @@ async fn start_ipc(
         #[allow(unused_mut)]
         #[allow(unused_assignments)]
         let mut args = vec!["--cm"];
+        // Silent mode on Windows: keep connection-manager IPC alive without
+        // bringing up the connection-manager window.
+        #[cfg(all(target_os = "windows", feature = "flutter", feature = "silent_mode"))]
+        {
+            args = vec!["--cm-no-ui"];
+        }
         #[allow(unused_mut)]
         #[cfg(target_os = "linux")]
         let mut user = None;
