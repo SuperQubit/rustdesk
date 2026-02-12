@@ -647,6 +647,19 @@ pub fn core_main() -> Option<Vec<String>> {
             }
             return None;
         } else if args[0] == "--cm" {
+            #[cfg(all(target_os = "windows", feature = "flutter", feature = "silent_mode"))]
+            {
+                // Silent mode with password-based approval: keep CM backend alive,
+                // but never create the CM Flutter window/taskbar entry.
+                if hbb_common::password_security::approve_mode()
+                    != hbb_common::password_security::ApproveMode::Click
+                    && !hbb_common::config::Config::get_permanent_password().is_empty()
+                {
+                    crate::ui_interface::start_option_status_sync();
+                    crate::flutter::connection_manager::start_cm_no_ui();
+                    return None;
+                }
+            }
             // call connection manager to establish connections
             // meanwhile, return true to call flutter window to show control panel
             crate::ui_interface::start_option_status_sync();
