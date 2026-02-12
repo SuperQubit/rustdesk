@@ -130,6 +130,11 @@ def make_parser():
         help='Build with unix file copy paste feature'
     )
     parser.add_argument(
+        '--silent-mode',
+        action='store_true',
+        help='Enable feature silent_mode for Windows client silent operation'
+    )
+    parser.add_argument(
         '--skip-cargo',
         action='store_true',
         help='Skip cargo build process, only flutter version + Linux supported currently'
@@ -281,6 +286,8 @@ def get_features(args):
         features.append('flutter')
     if args.unix_file_copy_paste:
         features.append('unix-file-copy-paste')
+    if args.silent_mode:
+        features.append('silent_mode')
     if osx:
         if args.screencapturekit:
             features.append('screencapturekit')
