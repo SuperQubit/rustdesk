@@ -66,6 +66,7 @@ jobs:
   #       args: --locked
 
   build:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATIONS_ENABLED != 'false' }}
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     runs-on: ${{ matrix.job.os }}
     strategy:
